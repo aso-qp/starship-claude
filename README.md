@@ -1,0 +1,186 @@
+# starship-claude
+
+[![CI](https://github.com/martinemde/starship-claude/actions/workflows/ci.yml/badge.svg)](https://github.com/martinemde/starship-claude/actions/workflows/ci.yml)
+
+![starship-claude screenshot](screenshot.png)
+
+_Use [Starship](https://starship.rs) for your [`claude` code](https://claude.ai/products/claude-code) status line._
+
+## Overview
+
+You need [starship installed](https://starship.rs/#quick-install). (that's why you're here right?)
+
+```bash
+# If you don't already have it...
+curl -sS https://starship.rs/install.sh | sh
+```
+
+Then grab the script and the config file from this repo.
+
+```bash
+# get the script
+mkdir -p ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/starship-claude \
+  -o ~/.local/bin/starship-claude && chmod +x ~/.local/bin/starship-claude
+
+# get the config file
+mkdir -p ~/.claude
+curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/starship.toml \
+  -o ~/.claude/starship.toml
+```
+
+Add the statusline in your Claude Code settings (`~/.claude/settings.json`):
+
+```jsonc
+{
+  // ... other stuff
+  "statusLine": {
+    "type": "command",
+    "command": "~/.local/bin/starship-claude"
+  }
+}
+```
+
+Run it directly to test it out but you'll need to grab a [test fixture JSON file](https://raw.githubusercontent.com/martinemde/starship-claude/refs/heads/main/test/fixtures/low_cost_session.json).
+
+```sh
+./starship-claude < test/fixtures/low_cost_session.json
+```
+
+## My Favorite Feature: Context Window Progress Bar
+
+Show progress bars for context usage percentages in terminals like Ghostty. (I love it!)
+
+- Progress bar scales for 80% compaction.
+  - 0-45%: Normal - You're good.
+  - 45-65%: Warning - Reset if it's not going well.
+  - 65%+: Error - Compacting soon...
+
+### Customize
+
+Add these options to the `~/.claude/settings.json` if you must.
+
+```sh
+# custom config file
+starship-claude --config ~/.config/starship/claude.toml
+
+# disable terminal context progress bar (oh my! why?)
+starship-claude --no-progress
+```
+
+## Starship Configuration
+
+The `starship.toml` in this repo is standard starship, so use whatevery you want. The custom parts for claude are outlined below. Customize it like you would starship, or grab a preset and then add the custom bits for claude.
+
+```toml
+"$schema" = "https://starship.rs/config-schema.json"
+
+# Don't add extra newline before prompt
+add_newline = false
+
+# Prompt format: directory | jj status | model | context | cost | duration
+# Each section is separated by powerline-style arrows with background colors
+format = """
+$(env.CLAUDE_STAR)\
+$directory\
+$git_branch\
+$git_status\
+${env_var.CLAUDE_MODEL}\
+${env_var.CLAUDE_CONTEXT}\
+${env_var.CLAUDE_COST}\
+"""
+
+# Use Catppuccin Mocha color palette
+palette = 'catppuccin_mocha'
+
+# Catppuccin Mocha color definitions
+# Full palette: https://github.com/catppuccin/catppuccin
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"
+
+[env_var.CLAUDE_STAR]
+variable = "CLAUDE_STAR"
+format = "[$env_value]($style)"
+style = "fg:#D97757"
+
+[directory]
+style = "fg:sky"
+format = "[ $path ]($style)"
+truncation_length = 1      # Show only current directory
+truncation_symbol = "…/"
+
+[git_branch]
+symbol = ""
+style = "fg:maroon"
+format = "[$symbol $branch ]($style)"
+
+[git_status]
+style = "fg:maroon"
+format = "[($all_status$ahead_behind) ]($style)"
+
+# Claude model display (haiku / sonnet / opus)
+# Set by starship-claude script
+[env_var.CLAUDE_MODEL]
+variable = "CLAUDE_MODEL"
+format = "[$env_value ]($style)"
+style = "fg:sapphire"
+
+# Context window usage percentage
+# Set by starship-claude script
+[env_var.CLAUDE_CONTEXT]
+variable = "CLAUDE_CONTEXT"
+format = "[$env_value ]($style)"
+style = "fg:peach"
+
+# Session cost
+# Set by starship-claude script
+[env_var.CLAUDE_COST]
+variable = "CLAUDE_COST"
+format = "[$env_value ]($style)"
+style = "fg:green"
+```
+
+### Running Tests
+
+Install BATS and run tests:
+
+```bash
+# Install BATS via mise
+mise use bats@latest
+mise install
+
+# Run all tests
+mise exec -- bats test/
+
+# Run specific test file
+mise exec -- bats test/model_extraction.bats
+```
+
+## License
+
+MIT License © 2026 Martin Emde
