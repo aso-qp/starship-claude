@@ -9,13 +9,16 @@ _Use [Starship](https://starship.rs) for your [`claude` code](https://claude.ai/
 ## Overview
 
 You need [starship installed](https://starship.rs/#quick-install). (that's why you're here right?)
+This also uses [Nerd Fonts](https://www.nerdfonts.com/) for the shapes and the robots.
 
 ```bash
-# If you don't already have it...
+# If you don't already have starship...
 curl -sS https://starship.rs/install.sh | sh
 ```
 
-Then grab the script and the config file from this repo.
+I know you don't want yet another dependency, that's why this is all contained in a single [bash script](https://github.com/martinemde/starship-claude/blob/main/starship-claude). Just grab it and make it your own. It's a starting point.
+
+Here's a simple set of commands to get started:
 
 ```bash
 # get the script
@@ -56,21 +59,25 @@ Show progress bars for context usage percentages in terminals like Ghostty. (I l
   - 50-65%: Warning - Reset if it's not going well.
   - 65%+: Error - Compacting soon...
 
+> [!NOTE]
+> This doesn't work in tmux even if you are using a Ghostty.
+> Let me know if you find a workaround.
+
 ### Customize
 
-Add these options to the `~/.claude/settings.json` if you must.
+Add these options to the `~/.claude/settings.json` if you want do things differently.
 
 ```sh
 # custom config file
 starship-claude --config ~/.config/starship/claude.toml
 
-# disable terminal context progress bar (oh my! why?)
+# disable terminal context progress bar (maybe it's printing weird characters?)
 starship-claude --no-progress
 ```
 
 ## Starship Configuration
 
-The `starship.toml` in this repo is standard starship, so use whatevery you want. The custom parts for claude are outlined below. Customize it like you would starship, or grab a preset and then add the custom bits for claude.
+The `starship.toml` in this repo is standard starship with `env_var` configs. The parts I added from claude's data are visible below. Customize it like you would starship, or grab a preset and then add the custom bits for claude like you see here.
 
 ```toml
 "$schema" = "https://starship.rs/config-schema.json"
