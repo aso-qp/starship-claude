@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail
 
+# Configuration: context window progress thresholds
+PROGRESS_COMPACT=80 # Percentage at which Claude compacts context
+PROGRESS_YELLOW=50  # Warning threshold for progress bar
+PROGRESS_RED=65     # Error threshold for progress bar
+
+# Configuration: model display names
+HAIKU=" haiku"
+SONNET="󰚩 sonnet"
+OPUS="󱚦 opus"
+
+# Configuration: random star characters for prompt decoration
+STARS=("" "✴" "✶" "❇" "✳" "❋" "*" "✦" "✧" "✸" "✷" "✶" "✴" "✳" "✲" "✱" "❉" "❈" "❇")
+# Export a random star character that changes each prompt
+export CLAUDE_STAR="${STARS[$RANDOM % ${#STARS[@]}]}"
+
 # Parse command line options
 show_progress=1
 starship_config=""
@@ -24,16 +39,6 @@ while [ $# -gt 0 ]; do
     ;;
   esac
 done
-
-# Configuration: context window progress thresholds
-PROGRESS_COMPACT=80 # Percentage at which Claude compacts context
-PROGRESS_YELLOW=50  # Warning threshold for progress bar
-PROGRESS_RED=65     # Error threshold for progress bar
-
-# Configuration: random star characters for prompt decoration
-STARS=("" "✴" "✶" "❇" "✳" "❋" "*" "✦" "✧" "✸" "✷" "✶" "✴" "✳" "✲" "✱" "❉" "❈" "❇")
-# Export a random star character that changes each prompt
-export CLAUDE_STAR="${STARS[$RANDOM % ${#STARS[@]}]}"
 
 payload="$(cat || true)"
 
@@ -61,9 +66,9 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
     lower_model="$(printf '%s' "$raw_model" | tr '[:upper:]' '[:lower:]')"
 
     case "$lower_model" in
-    *haiku*) short_model=" haiku" ;;
-    *sonnet*) short_model="󱜚 sonnet" ;;
-    *opus*) short_model="󱚥 opus" ;;
+    *haiku*) short_model="$HAIKU" ;;
+    *sonnet*) short_model="$SONNET" ;;
+    *opus*) short_model="$OPUS" ;;
     *) short_model="$raw_model" ;;
     esac
 
