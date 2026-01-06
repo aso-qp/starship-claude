@@ -52,8 +52,8 @@ Run it directly to test it out but you'll need to grab a [test fixture JSON file
 Show progress bars for context usage percentages in terminals like Ghostty. (I love it!)
 
 - Progress bar scales for 80% compaction.
-  - 0-45%: Normal - You're good.
-  - 45-65%: Warning - Reset if it's not going well.
+  - 0-50%: Normal - You're good.
+  - 50-65%: Warning - Reset if it's not going well.
   - 65%+: Error - Compacting soon...
 
 ### Customize

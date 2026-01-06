@@ -25,6 +25,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Configuration: context window progress thresholds
+PROGRESS_COMPACT=80 # Percentage at which Claude compacts context
+PROGRESS_YELLOW=50  # Warning threshold for progress bar
+PROGRESS_RED=65     # Error threshold for progress bar
+
 payload="$(cat || true)"
 
 if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
@@ -127,20 +132,20 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
       # Can be disabled via --no-progress flag
       # Defaults to enabled (1) if not set
       if [ "$show_progress" = "1" ]; then
-        # Scale progress bar: 0-80% context maps to 0-100% progress
-        # Claude compacts at 80%, so treat that as "full"
-        if [ "$percent_used" -ge 80 ]; then
+        # Scale progress bar: 0-PROGRESS_COMPACT% context maps to 0-100% progress
+        # Claude compacts at PROGRESS_COMPACT%, so treat that as "full"
+        if [ "$percent_used" -ge "$PROGRESS_COMPACT" ]; then
           progress_percent=100
         else
-          progress_percent=$((percent_used * 100 / 80))
+          progress_percent=$((percent_used * 100 / PROGRESS_COMPACT))
         fi
 
         # OSC 9;4 progress bar: ESC ] 9 ; 4 ; <state> ; <progress> BEL
         # State based on actual context usage:
-        # 0-45%: normal (state 1), 50-65%: warning (state 4), 65%+: error (state 2)
-        if [ "$percent_used" -ge 65 ]; then
+        # 0-PROGRESS_YELLOW%: normal (state 1), PROGRESS_YELLOW-PROGRESS_RED%: warning (state 4), PROGRESS_RED%+: error (state 2)
+        if [ "$percent_used" -ge "$PROGRESS_RED" ]; then
           progress_state=2 # Error
-        elif [ "$percent_used" -ge 45 ]; then
+        elif [ "$percent_used" -ge "$PROGRESS_YELLOW" ]; then
           progress_state=4 # Warning
         else
           progress_state=1 # Normal
