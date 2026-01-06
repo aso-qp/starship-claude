@@ -30,11 +30,16 @@ PROGRESS_COMPACT=80 # Percentage at which Claude compacts context
 PROGRESS_YELLOW=50  # Warning threshold for progress bar
 PROGRESS_RED=65     # Error threshold for progress bar
 
+# Configuration: random star characters for prompt decoration
+STARS=("" "✴" "✶" "❇" "✳" "❋" "*" "✦" "✧" "✸" "✷" "✶" "✴" "✳" "✲" "✱" "❉" "❈" "❇")
+# Export a random star character that changes each prompt
+export CLAUDE_STAR="${STARS[$RANDOM % ${#STARS[@]}]}"
+
 payload="$(cat || true)"
 
 if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   #
-  # 1) cd into the workspace dir (current_dir > project_dir > cwd)
+  # cd into the workspace dir (current_dir > project_dir > cwd)
   #
   dir="$(
     printf '%s' "$payload" |
@@ -45,7 +50,7 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   fi
 
   #
-  # 2) Short model name: haiku / sonnet / opus
+  # Short model name: haiku / sonnet / opus
   #
   raw_model="$(
     printf '%s' "$payload" |
@@ -66,7 +71,7 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   fi
 
   #
-  # 3) Cost: .cost.total_cost_usd → CLAUDE_COST (already formatted)
+  # Cost: .cost.total_cost_usd → CLAUDE_COST (already formatted)
   #
   raw_cost="$(
     printf '%s' "$payload" |
@@ -91,7 +96,7 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   fi
 
   #
-  # 4) Session id if you ever want it in Starship later
+  # Session id if you ever want it in Starship later
   #
   session_id="$(
     printf '%s' "$payload" |
@@ -102,13 +107,7 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   fi
 
   #
-  # 5) Random star character that changes each prompt
-  #
-  stars=("" "✴" "✶" "❇" "✳" "❋" "*" "✦" "✧" "✸" "✷" "✶" "✴" "✳" "✲" "✱" "❉" "❈" "❇")
-  export CLAUDE_STAR="${stars[$RANDOM % ${#stars[@]}]}"
-
-  #
-  # 6) Context window usage percentage
+  # Context window usage percentage
   #
   context_size="$(
     printf '%s' "$payload" |
