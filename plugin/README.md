@@ -14,7 +14,7 @@ Claude Code statusline.
   - Dracula
   - Nord
   - Solarized Dark
-- **Style Options**: Powerline arrows or minimal clean text
+- **Style Options**: Bubbles arrows or minimal clean text
 - **Automatic Installation**: Downloads the script, generates config, and updates settings
 
 ## Installation
@@ -33,7 +33,7 @@ Claude Code statusline.
 Then run the setup wizard:
 
 ```claude
-/starship-claude:setup
+/starship
 ```
 
 The wizard will:
@@ -60,5 +60,5 @@ After setup completes, you'll have:
 To change your palette, style, or other options, re-run the setup wizard:
 
 ```claude
-/starship-claude:setup
+/starship
 ```

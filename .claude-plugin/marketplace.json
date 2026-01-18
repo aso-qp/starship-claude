@@ -5,14 +5,14 @@
     "email": "me@martinemde.com"
   },
   "metadata": {
-    "description": "Starship-based statusline configuration for Claude Code",
+    "description": "starship-claude statusline setup wizard",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "starship-claude",
       "source": "./plugin",
-      "description": "Interactive setup wizard for starship-claude statusline with customizable palettes and styles",
+      "description": "Configure starship-claude statusline with customizable palettes and styles",
       "version": "1.0.0",
       "author": {
         "name": "Martin Emde",
@@ -20,7 +20,6 @@
       },
       "homepage": "https://github.com/martinemde/starship-claude",
       "repository": "https://github.com/martinemde/starship-claude",
-      "license": "MIT",
       "keywords": [
         "starship",
         "statusline",

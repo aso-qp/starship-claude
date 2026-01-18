@@ -22,7 +22,7 @@ _Use [Starship](https://starship.rs) for your [`claude` code](https://claude.ai/
 Then run the setup wizard:
 
 ```claude
-/starship-claude:setup
+/starship
 ```
 
 The wizard is just instructions to claude that will help with setup:
@@ -38,25 +38,27 @@ The wizard is just instructions to claude that will help with setup:
 
 ## Manual Install
 
-You need [starship installed](https://starship.rs/#quick-install). (that's why you're here right?)
-We ❤️ [Nerd Fonts](https://www.nerdfonts.com/) for the shapes and the robots. I recommend getting one.
+You'll need [starship](https://starship.rs/#quick-install) to render the statusline:
 
 ```bash
 # If you don't already have starship...
 curl -sS https://starship.rs/install.sh | sh
+
 ```
 
-Then run these commands in your shell.
+You'll probably want a [Nerd Font](https://www.nerdfonts.com/) (optional) for the robot icons.
+
+When you're ready to install, run these in your terminal (not in claude):
 
 ```bash
-# get the script
+# Download the script from this repository
 mkdir -p ~/.local/bin
-curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/starship-claude \
+curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/plugin/bin/starship-claude \
   -o ~/.local/bin/starship-claude && chmod +x ~/.local/bin/starship-claude
 
-# get the config file
+# Get the config file that you can customize
 mkdir -p ~/.claude
-curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/starship.toml \
+curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/plugin/templates/minimal-nerd.toml \
   -o ~/.claude/starship.toml
 ```
 
@@ -107,103 +109,6 @@ starship-claude --config ~/.config/starship/claude.toml
 
 # disable terminal context progress bar (maybe it's printing weird characters?)
 starship-claude --no-progress
-```
-
-## Starship Configuration
-
-The `starship.toml` in this repo is standard starship with `env_var` configs. The parts I added from claude's data are visible below. Customize it like you would starship, or grab a preset and then add the custom bits for claude like you see here.
-
-```toml
-"$schema" = "https://starship.rs/config-schema.json"
-
-# Don't add extra newline before prompt
-add_newline = false
-
-# Prompt format: directory | jj status | model | context | cost | duration
-# Each section is separated by powerline-style arrows with background colors
-format = """
-$(env.CLAUDE_STAR)\
-$directory\
-$git_branch\
-$git_status\
-${env_var.CLAUDE_MODEL}\
-${env_var.CLAUDE_CONTEXT}\
-${env_var.CLAUDE_COST}\
-"""
-
-# Use Catppuccin Mocha color palette
-palette = 'catppuccin_mocha'
-
-# Catppuccin Mocha color definitions
-# Full palette: https://github.com/catppuccin/catppuccin
-[palettes.catppuccin_mocha]
-rosewater = "#f5e0dc"
-flamingo = "#f2cdcd"
-pink = "#f5c2e7"
-mauve = "#cba6f7"
-red = "#f38ba8"
-maroon = "#eba0ac"
-peach = "#fab387"
-yellow = "#f9e2af"
-green = "#a6e3a1"
-teal = "#94e2d5"
-sky = "#89dceb"
-sapphire = "#74c7ec"
-blue = "#89b4fa"
-lavender = "#b4befe"
-text = "#cdd6f4"
-subtext1 = "#bac2de"
-subtext0 = "#a6adc8"
-overlay2 = "#9399b2"
-overlay1 = "#7f849c"
-overlay0 = "#6c7086"
-surface2 = "#585b70"
-surface1 = "#45475a"
-surface0 = "#313244"
-base = "#1e1e2e"
-mantle = "#181825"
-crust = "#11111b"
-
-[env_var.CLAUDE_STAR]
-variable = "CLAUDE_STAR"
-format = "[$env_value]($style)"
-style = "fg:#D97757"
-
-[directory]
-style = "fg:sky"
-format = "[ $path ]($style)"
-truncation_length = 1      # Show only current directory
-truncation_symbol = "…/"
-
-[git_branch]
-symbol = ""
-style = "fg:maroon"
-format = "[$symbol $branch ]($style)"
-
-[git_status]
-style = "fg:maroon"
-format = "[($all_status$ahead_behind) ]($style)"
-
-# Claude model display (haiku / sonnet / opus)
-# Set by starship-claude script
-[env_var.CLAUDE_MODEL]
-variable = "CLAUDE_MODEL"
-format = "[$env_value ]($style)"
-style = "fg:sapphire"
-
-# Context window usage percentage
-# Set by starship-claude script
-[env_var.CLAUDE_CONTEXT]
-variable = "CLAUDE_CONTEXT"
-format = "[$env_value ]($style)"
-style = "fg:peach"
-
-# Session cost
-# Set by starship-claude script
-[env_var.CLAUDE_COST]
-variable = "CLAUDE_COST"
-format = "[$env_value ]($style)"
-style = "fg:green"
 ```
 
 ### Running Tests
