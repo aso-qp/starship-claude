@@ -110,18 +110,18 @@ load test_helper
 }
 
 @test "different context levels produce valid percentages" {
-  # Test with context
+  # Test with context (left-padded to 3 chars)
   output=$(run_with_fixture "active_session_with_context.json")
   context=$(get_env_var "CLAUDE_CONTEXT" "$output")
-  [[ "$context" =~ ^[0-9]+%$ ]]
+  [[ "$context" =~ ^[\ 0-9][0-9]%$ ]]
 
   # Test 40% context
   output=$(run_with_fixture "context_40_percent.json")
   context=$(get_env_var "CLAUDE_CONTEXT" "$output")
   [ "$context" = "40%" ]
 
-  # Test without context (null current_usage)
+  # Test without context (null current_usage) - shows placeholder
   output=$(run_with_fixture "session_without_current_usage.json")
   context=$(get_env_var "CLAUDE_CONTEXT" "$output")
-  [ -z "$context" ]
+  [ "$context" = "  %" ]
 }

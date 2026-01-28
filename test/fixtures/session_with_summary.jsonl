@@ -1,0 +1,3 @@
+{"type":"user","message":{"role":"user","content":"What is this project about?"}}
+{"type":"assistant","message":{"role":"assistant","content":"This is a starship prompt integration for Claude Code."}}
+{"type":"summary","summary":"Working on starship-claude integration for Claude Code status line display"}

@@ -54,9 +54,10 @@ verify_template_match() {
   [ "$status" -eq 0 ]
   [ -f "$output_file" ]
 
-  # Verify it's the minimal-text template
+  # Verify it's the minimal-text template with custom palette
   grep -q '# Minimal Text Template' "$output_file"
-  grep -q 'palette = "catppuccin_mocha"' "$output_file"
+  grep -q 'palette = "custom"' "$output_file"
+  grep -q '\[palettes.custom\]' "$output_file"
   grep -q '\[directory\]' "$output_file"
 }
 
@@ -68,9 +69,10 @@ verify_template_match() {
   [ "$status" -eq 0 ]
   [ -f "$output_file" ]
 
-  # Verify palette was substituted
-  grep -q 'palette = "dracula"' "$output_file"
-  grep -q '\[palettes.dracula\]' "$output_file"
+  # Verify palette was applied (all palettes use [palettes.custom])
+  grep -q 'palette = "custom"' "$output_file"
+  grep -q '# Dracula' "$output_file"
+  grep -q '\[palettes.custom\]' "$output_file"
 }
 
 @test "configure.sh: rejects invalid palette" {
@@ -91,17 +93,17 @@ verify_template_match() {
   grep -q '\[directory\]' "$output_file"
 }
 
-@test "configure.sh: bubbles style uses bubbles-nerd template" {
+@test "configure.sh: bubbles style uses bubbles template" {
   local output_file="${TEST_TEMP_DIR}/config.toml"
 
-  run run_configure --style bubbles --nerdfont --write "$output_file"
+  run run_configure --style bubbles --write "$output_file"
 
   [ "$status" -eq 0 ]
   [ -f "$output_file" ]
 
-  # Verify template structure matches bubbles-nerd
+  # Verify template structure matches bubbles
   verify_template_match "$output_file" \
-    "${STARSHIP_CLAUDE_PLUGIN_ROOT}/templates/bubbles-nerd.toml" 15
+    "${STARSHIP_CLAUDE_PLUGIN_ROOT}/templates/bubbles.toml" 15
 }
 
 @test "configure.sh: rejects invalid style" {
@@ -109,7 +111,7 @@ verify_template_match() {
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Invalid style 'invalid_style'"* ]]
-  [[ "$output" == *"Valid styles: minimal, bubbles"* ]]
+  [[ "$output" == *"Valid styles: minimal, bubbles, powerline"* ]]
 }
 
 @test "configure.sh: --palette requires argument" {
@@ -157,8 +159,9 @@ verify_template_match() {
   [ "$status" -eq 0 ]
   [ -f "${default_dir}/starship.toml" ]
 
-  # Verify it wrote the config
-  grep -q 'palette = "catppuccin_mocha"' "${default_dir}/starship.toml"
+  # Verify it wrote the config (default palette is catppuccin_mocha)
+  grep -q 'palette = "custom"' "${default_dir}/starship.toml"
+  grep -q '# Catppuccin Mocha' "${default_dir}/starship.toml"
   [[ "$output" == *"Wrote config to:"* ]]
   [[ "$output" == *".claude/starship.toml"* ]]
 }
@@ -187,7 +190,7 @@ verify_template_match() {
 
   # Verify minimal-nerd template was used
   grep -q '# Minimal Nerd Template' "$output_file"
-  grep -q 'palette = "catppuccin_mocha"' "$output_file"
+  grep -q 'palette = "custom"' "$output_file"
 }
 
 @test "configure.sh: applies nord palette correctly" {
@@ -196,8 +199,9 @@ verify_template_match() {
   run run_configure --palette nord --write "$output_file"
 
   [ "$status" -eq 0 ]
-  grep -q 'palette = "nord"' "$output_file"
-  grep -q '\[palettes.nord\]' "$output_file"
+  grep -q 'palette = "custom"' "$output_file"
+  grep -q '# Nord' "$output_file"
+  grep -q '\[palettes.custom\]' "$output_file"
 }
 
 @test "configure.sh: minimal-text template structure matches source" {
@@ -237,8 +241,8 @@ EOF
   [ "$status" -eq 0 ]
   [ -f "$output_file" ]
 
-  # Should contain palette setting
-  grep -q 'palette = "catppuccin_mocha"' "$output_file"
+  # Should contain palette setting (uses custom palette)
+  grep -q 'palette = "custom"' "$output_file"
 
   # Should have written config message
   [[ "$output" == *"Wrote config to:"* ]]
@@ -254,18 +258,20 @@ EOF
 
   # Verify all key sections exist
   grep -q '"$schema" = "https://starship.rs/config-schema.json"' "$output_file"
-  grep -q 'palette = "gruvbox_dark"' "$output_file"
+  grep -q 'palette = "custom"' "$output_file"
+  grep -q '# Gruvbox Dark' "$output_file"
   grep -q '\[directory\]' "$output_file"
   grep -q '\[env_var.CLAUDE_MODEL\]' "$output_file"
-  grep -q '\[palettes.gruvbox_dark\]' "$output_file"
+  grep -q '\[palettes.custom\]' "$output_file"
 }
 
-@test "configure.sh: --compare-styles shows both styles" {
+@test "configure.sh: --compare-styles shows all three styles" {
   run run_configure --compare-styles
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"MINIMAL:"* ]]
-  [[ "$output" == *"POWERLINE:"* ]]
+  [[ "$output" == *"Minimal:"* ]]
+  [[ "$output" == *"Bubbles:"* ]]
+  [[ "$output" == *"Powerline:"* ]]
 }
 
 @test "configure.sh: --all-palettes shows all 6 palettes" {
@@ -279,28 +285,31 @@ EOF
   [[ "$output" == *"dracula:"* ]]
   [[ "$output" == *"gruvbox_dark:"* ]]
   [[ "$output" == *"nord:"* ]]
-  [[ "$output" == *"solarized_dark:"* ]]
+  [[ "$output" == *"tokyonight:"* ]]
 }
 
 @test "configure.sh: combines multiple options correctly" {
   local output_file="${TEST_TEMP_DIR}/config.toml"
 
-  run run_configure --palette solarized_dark --nerdfont --style minimal --write "$output_file"
+  run run_configure --palette tokyonight --nerdfont --style minimal --write "$output_file"
 
   [ "$status" -eq 0 ]
-  grep -q 'palette = "solarized_dark"' "$output_file"
+  grep -q 'palette = "custom"' "$output_file"
+  grep -q '# Tokyo Night' "$output_file"
   grep -q '# Minimal Nerd Template' "$output_file"
 }
 
 @test "configure.sh: all six palettes are valid" {
   local output_file="${TEST_TEMP_DIR}/config.toml"
-  local palettes=(catppuccin_mocha catppuccin_frappe dracula gruvbox_dark nord solarized_dark)
+  local palettes=(catppuccin_mocha catppuccin_frappe dracula gruvbox_dark nord tokyonight)
 
   for palette in "${palettes[@]}"; do
     run run_configure --palette "$palette" --write "$output_file"
 
     [ "$status" -eq 0 ]
-    grep -q "palette = \"$palette\"" "$output_file"
+    # All palettes use palette = "custom"
+    grep -q 'palette = "custom"' "$output_file"
+    grep -q '\[palettes.custom\]' "$output_file"
     rm "$output_file"
   done
 }

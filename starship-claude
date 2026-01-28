@@ -5,11 +5,43 @@
 # This script parses the claude code status line data to provide
 # environment variables you can use in a standard Starship prompt.
 #
-# - `CLAUDE_MODEL` - Current model (haiku/sonnet/opus)
-# - `CLAUDE_MODEL_NAME` - Model with version (e.g., "opus 4.5")
-# - `CLAUDE_CONTEXT` - Context window usage percentage
-# - `CLAUDE_COST` - Session cost
-# - Prints OSC 9;4 ConEmu terminal progress bar for context usage (optional)
+# Formatted values (for display):
+# - `CLAUDE_MODEL` - Short model name with icon (haiku/sonnet/opus)
+# - `CLAUDE_MODEL_NAME` - Model with version (e.g., "󱚦 opus 4.5")
+# - `CLAUDE_CONTEXT` - Context window usage percentage (left-padded, e.g., "15%")
+# - `CLAUDE_COST` - Formatted session cost (e.g., "$0.71" or "< $0.01")
+# - `CLAUDE_SUMMARY` - Session summary extracted from transcript
+# - `CLAUDE_STAR` - Random star character for prompt decoration
+#
+# Raw values (direct from JSON):
+# - `CLAUDE_SESSION_ID` - Session UUID
+# - `CLAUDE_TRANSCRIPT_PATH` - Path to session transcript JSONL
+# - `CLAUDE_CWD` - Current working directory from session
+# - `CLAUDE_WORKSPACE_CURRENT_DIR` - workspace.current_dir
+# - `CLAUDE_WORKSPACE_PROJECT_DIR` - workspace.project_dir
+# - `CLAUDE_VERSION` - Claude Code version
+# - `CLAUDE_OUTPUT_STYLE` - Output style name
+# - `CLAUDE_MODEL_ID` - Full model identifier (e.g., "claude-sonnet-4-5-20250929")
+# - `CLAUDE_MODEL_DISPLAY_NAME` - Model display name (e.g., "Sonnet 4.5")
+# - `CLAUDE_COST_RAW` - Raw cost in USD (number)
+# - `CLAUDE_TOTAL_DURATION_MS` - Total session duration in ms
+# - `CLAUDE_API_DURATION_MS` - Total API call duration in ms
+# - `CLAUDE_LINES_ADDED` - Total lines added
+# - `CLAUDE_LINES_REMOVED` - Total lines removed
+# - `CLAUDE_TOTAL_INPUT_TOKENS` - Cumulative input tokens
+# - `CLAUDE_TOTAL_OUTPUT_TOKENS` - Cumulative output tokens
+# - `CLAUDE_CONTEXT_SIZE` - Context window size (e.g., 200000)
+# - `CLAUDE_EXCEEDS_200K` - Whether session exceeds 200k tokens ("true"/"false")
+# - `CLAUDE_INPUT_TOKENS` - Current usage input tokens
+# - `CLAUDE_OUTPUT_TOKENS` - Current usage output tokens
+# - `CLAUDE_CACHE_CREATION` - Cache creation input tokens
+# - `CLAUDE_CACHE_READ` - Cache read input tokens
+#
+# Computed values:
+# - `CLAUDE_CURRENT_TOKENS` - Sum of input + cache tokens (for context %)
+# - `CLAUDE_PERCENT_RAW` - Raw percentage number (no padding)
+#
+# Also prints OSC 9;4 ConEmu terminal progress bar for context usage (optional)
 #
 # Repository: https://github.com/martinemde/starship-claude
 #
@@ -103,6 +135,65 @@ payload="$(cat || true)"
 
 if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   #
+  # Extract and export all raw values from the JSON payload
+  # These CLAUDE_* variables provide access to the raw data for custom prompts
+  #
+
+  # Session and workspace identifiers
+  raw_transcript_path="$(printf '%s' "$payload" | jq -r '.transcript_path // empty')"
+  export CLAUDE_TRANSCRIPT_PATH="${raw_transcript_path:-}"
+
+  raw_cwd="$(printf '%s' "$payload" | jq -r '.cwd // empty')"
+  export CLAUDE_CWD="${raw_cwd:-}"
+
+  raw_workspace_current="$(printf '%s' "$payload" | jq -r '.workspace.current_dir // empty')"
+  export CLAUDE_WORKSPACE_CURRENT_DIR="${raw_workspace_current:-}"
+
+  raw_workspace_project="$(printf '%s' "$payload" | jq -r '.workspace.project_dir // empty')"
+  export CLAUDE_WORKSPACE_PROJECT_DIR="${raw_workspace_project:-}"
+
+  # Version and output style
+  raw_version="$(printf '%s' "$payload" | jq -r '.version // empty')"
+  export CLAUDE_VERSION="${raw_version:-}"
+
+  raw_output_style="$(printf '%s' "$payload" | jq -r '.output_style.name // empty')"
+  export CLAUDE_OUTPUT_STYLE="${raw_output_style:-}"
+
+  # Model identifiers (raw values)
+  raw_model_id="$(printf '%s' "$payload" | jq -r '.model.id // empty')"
+  export CLAUDE_MODEL_ID="${raw_model_id:-}"
+
+  raw_model_display="$(printf '%s' "$payload" | jq -r '.model.display_name // empty')"
+  export CLAUDE_MODEL_DISPLAY_NAME="${raw_model_display:-}"
+
+  # Cost metrics (raw values)
+  raw_cost_usd="$(printf '%s' "$payload" | jq -r '.cost.total_cost_usd // empty')"
+  export CLAUDE_COST_RAW="${raw_cost_usd:-}"
+
+  raw_total_duration="$(printf '%s' "$payload" | jq -r '.cost.total_duration_ms // empty')"
+  export CLAUDE_TOTAL_DURATION_MS="${raw_total_duration:-}"
+
+  raw_api_duration="$(printf '%s' "$payload" | jq -r '.cost.total_api_duration_ms // empty')"
+  export CLAUDE_API_DURATION_MS="${raw_api_duration:-}"
+
+  raw_lines_added="$(printf '%s' "$payload" | jq -r '.cost.total_lines_added // empty')"
+  export CLAUDE_LINES_ADDED="${raw_lines_added:-}"
+
+  raw_lines_removed="$(printf '%s' "$payload" | jq -r '.cost.total_lines_removed // empty')"
+  export CLAUDE_LINES_REMOVED="${raw_lines_removed:-}"
+
+  # Context window totals (cumulative across session)
+  raw_total_input="$(printf '%s' "$payload" | jq -r '.context_window.total_input_tokens // empty')"
+  export CLAUDE_TOTAL_INPUT_TOKENS="${raw_total_input:-}"
+
+  raw_total_output="$(printf '%s' "$payload" | jq -r '.context_window.total_output_tokens // empty')"
+  export CLAUDE_TOTAL_OUTPUT_TOKENS="${raw_total_output:-}"
+
+  # Exceeds 200k flag (boolean - must handle false explicitly, not with // empty)
+  raw_exceeds="$(printf '%s' "$payload" | jq -r 'if .exceeds_200k_tokens == null then "" else .exceeds_200k_tokens | tostring end')"
+  export CLAUDE_EXCEEDS_200K="${raw_exceeds:-}"
+
+  #
   # cd into the workspace dir (current_dir > project_dir > cwd)
   #
   dir="$(
@@ -184,57 +275,67 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   fi
 
   #
+  # Session summary from transcript JSONL file
+  #
+  export CLAUDE_SUMMARY=""
+  transcript_path="$(
+    printf '%s' "$payload" |
+      jq -r '.transcript_path // empty'
+  )"
+  if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
+    # Get the most recent summary from the transcript
+    summary="$(
+      jq -rs '[.[] | select(.type == "summary")] | last | .summary // empty' "$transcript_path"
+    )"
+    if [ -n "$summary" ]; then
+      # Sanitize: replace newlines with spaces, collapse whitespace, trim
+      summary="$(printf '%s' "$summary" | tr '\n' ' ' | tr -s ' ' | sed 's/^ *//;s/ *$//')"
+      export CLAUDE_SUMMARY="$summary"
+    fi
+  fi
+
+  #
   # Context window usage percentage
+  # Export all raw values for debugging prompt rendering issues
   #
   context_size="$(
     printf '%s' "$payload" |
       jq -r '.context_window.context_window_size // empty'
   )"
+  export CLAUDE_CONTEXT_SIZE="${context_size:-}"
+
   current_usage="$(
     printf '%s' "$payload" |
       jq '.context_window.current_usage // null'
   )"
 
   if [ -n "$context_size" ] && [ "$context_size" != "null" ] && [ "$current_usage" != "null" ]; then
-    current_tokens="$(
-      printf '%s' "$current_usage" |
-        jq '.input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens'
-    )"
-    if [ -n "$current_tokens" ] && [ "$current_tokens" != "null" ]; then
+    # Extract individual token counts
+    input_tokens="$(printf '%s' "$current_usage" | jq -r '.input_tokens // 0')"
+    output_tokens="$(printf '%s' "$current_usage" | jq -r '.output_tokens // 0')"
+    cache_creation="$(printf '%s' "$current_usage" | jq -r '.cache_creation_input_tokens // 0')"
+    cache_read="$(printf '%s' "$current_usage" | jq -r '.cache_read_input_tokens // 0')"
+
+    export CLAUDE_INPUT_TOKENS="$input_tokens"
+    export CLAUDE_OUTPUT_TOKENS="$output_tokens"
+    export CLAUDE_CACHE_CREATION="$cache_creation"
+    export CLAUDE_CACHE_READ="$cache_read"
+
+    current_tokens=$((input_tokens + cache_creation + cache_read))
+    export CLAUDE_CURRENT_TOKENS="$current_tokens"
+
+    if [ "$current_tokens" -gt 0 ]; then
       percent_used=$((current_tokens * 100 / context_size))
-      export CLAUDE_CONTEXT="${percent_used}%"
-
-      # Terminal progress bar (OSC 9;4) is optional
-      # Can be disabled via --no-progress flag
-      # Defaults to enabled (1) if not set
-      if [ "$show_progress" = "1" ]; then
-        # Scale progress bar: 0-PROGRESS_COMPACT% context maps to 0-100% progress
-        # Claude compacts at PROGRESS_COMPACT%, so treat that as "full"
-        if [ "$percent_used" -ge "$PROGRESS_COMPACT" ]; then
-          progress_percent=100
-        else
-          progress_percent=$((percent_used * 100 / PROGRESS_COMPACT))
-        fi
-
-        # OSC 9;4 progress bar: ESC ] 9 ; 4 ; <state> ; <progress> BEL
-        # State based on actual context usage:
-        # 0-PROGRESS_YELLOW%: normal (state 1), PROGRESS_YELLOW-PROGRESS_RED%: warning (state 4), PROGRESS_RED%+: error (state 2)
-        if [ "$percent_used" -ge "$PROGRESS_RED" ]; then
-          progress_state=2 # Error
-        elif [ "$percent_used" -ge "$PROGRESS_YELLOW" ]; then
-          progress_state=4 # Warning
-        else
-          progress_state=1 # Normal
-        fi
-        printf '\033]9;4;%d;%d\a' "$progress_state" "$progress_percent"
-      fi
+      export CLAUDE_PERCENT_RAW="$percent_used"
+      # Left-pad to 3 chars for consistent width (prevents ghost characters on redraw)
+      export CLAUDE_CONTEXT="$(printf '%3s' "${percent_used}%")"
+    else
+      # No token data yet - use placeholder to maintain consistent width
+      export CLAUDE_CONTEXT="  %"
     fi
   else
-    # Clear progress bar when context is empty or not sent
-    if [ "$show_progress" = "1" ]; then
-      # OSC 9;4 with state 0 (hidden) clears the progress bar
-      printf '\033]9;4;0;0\a'
-    fi
+    # No usage data - use placeholder to maintain consistent width
+    export CLAUDE_CONTEXT="  %"
   fi
 fi
 
@@ -258,3 +359,30 @@ fi
 STARSHIP_CONFIG="$starship_config" \
   STARSHIP_SHELL=sh \
   $starship_cmd $starship_args
+
+# Terminal progress bar (OSC 9;4) - sent AFTER starship to avoid render conflicts
+# Can be disabled via --no-progress flag
+if [ "$show_progress" = "1" ]; then
+  if [ -n "${percent_used:-}" ]; then
+    # Scale progress bar: 0-PROGRESS_COMPACT% context maps to 0-100% progress
+    # Claude compacts at PROGRESS_COMPACT%, so treat that as "full"
+    if [ "$percent_used" -ge "$PROGRESS_COMPACT" ]; then
+      progress_percent=100
+    else
+      progress_percent=$((percent_used * 100 / PROGRESS_COMPACT))
+    fi
+
+    # OSC 9;4 progress bar: ESC ] 9 ; 4 ; <state> ; <progress> BEL
+    # State based on actual context usage:
+    # 0-PROGRESS_YELLOW%: normal (state 1), PROGRESS_YELLOW-PROGRESS_RED%: warning (state 4), PROGRESS_RED%+: error (state 2)
+    if [ "$percent_used" -ge "$PROGRESS_RED" ]; then
+      progress_state=2 # Error
+    elif [ "$percent_used" -ge "$PROGRESS_YELLOW" ]; then
+      progress_state=4 # Warning
+    else
+      progress_state=1 # Normal
+    fi
+    printf '\033]9;4;%d;%d\a' "$progress_state" "$progress_percent" >/dev/tty 2>/dev/null || true
+  fi
+  # Don't clear progress bar when data is missing - just leave it alone
+fi
