@@ -4,7 +4,9 @@
 
 ![starship-claude screenshot](screenshot.png)
 
-_Use [Starship](https://starship.rs) for your [`claude` code](https://claude.ai/products/claude-code) status line._
+_Use [Starship](https://starship.rs) for your [`claude` code](https://claude.ai/products/claude-code) or [Cursor](https://cursor.com) status line._
+
+**Now supports both Claude Code and Cursor IDEs!** The script automatically detects your environment.
 
 ## Quick Start
 
@@ -38,7 +40,48 @@ The wizard is just instructions to claude that will help with setup:
 7. Update your Claude Code settings
 8. Verify everything works
 
-## Manual Install
+## Cursor Installation
+
+For **Cursor IDE** users, the script automatically detects Cursor via the `CURSOR_AGENT` environment variable.
+
+### Quick Install for Cursor
+
+```bash
+# Install starship if you don't have it
+curl -sS https://starship.rs/install.sh | sh
+
+# Download the script
+mkdir -p ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/plugin/bin/starship-claude \
+  -o ~/.local/bin/starship-claude && chmod +x ~/.local/bin/starship-claude
+
+# Get the config file (will be stored in ~/.cursor/starship.toml)
+mkdir -p ~/.cursor
+curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/plugin/templates/minimal-nerd.toml \
+  -o ~/.cursor/starship.toml
+```
+
+### Using in Cursor
+
+Since Cursor doesn't have a built-in status line API like Claude Code, you can use this script as a terminal prompt:
+
+**For bash:**
+```bash
+# Add to ~/.bashrc
+eval "$(starship init bash)"
+export PROMPT_COMMAND='eval "$(~/.local/bin/starship-claude)"'
+```
+
+**For zsh:**
+```zsh
+# Add to ~/.zshrc
+eval "$(starship init zsh)"
+# The script will be called automatically when starship runs
+```
+
+The script will automatically detect Cursor and use `~/.cursor/starship.toml` for configuration (falling back to `~/.claude/starship.toml` if needed).
+
+## Manual Install (Claude Code)
 
 You'll need [starship](https://starship.rs/#quick-install) to render the statusline:
 
@@ -103,7 +146,9 @@ Warning does not mean stop, but be aware of your context usage.
 
 ### Customize
 
-Add these options to the `~/.claude/settings.json` if you want do things differently.
+**For Claude Code:** Add these options to the `~/.claude/settings.json` if you want do things differently.
+
+**For Cursor:** Use command-line options or environment variables.
 
 ```sh
 # custom config file
@@ -111,7 +156,21 @@ starship-claude --config ~/.config/starship/claude.toml
 
 # disable terminal context progress bar (maybe it's printing weird characters?)
 starship-claude --no-progress
+
+# force a specific mode (claude or cursor)
+starship-claude --mode cursor
+
+# override path context
+starship-claude --path /custom/path
 ```
+
+### Environment Detection
+
+The script automatically detects your environment:
+- **Claude Code**: Detected when `CURSOR_AGENT` is not set
+- **Cursor**: Detected when `CURSOR_AGENT=1` is set
+
+You can override detection with `--mode claude` or `--mode cursor`.
 
 ### Running Tests
 

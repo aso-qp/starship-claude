@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 #
-# starship-claude - Use Starship for your Claude Code status line
+# starship-claude - Use Starship for your Claude Code or Cursor status line
 #
-# This script parses the claude code status line data to provide
+# This script parses status line data (from Claude Code or Cursor) to provide
 # environment variables you can use in a standard Starship prompt.
+#
+# Supports both Claude Code and Cursor IDEs with automatic environment detection.
 #
 # Formatted values (for display):
 # - `CLAUDE_MODEL` - Short model name with icon (haiku/sonnet/opus)
@@ -58,6 +60,13 @@
 #   --config PATH      Use custom Starship config file location
 #   --path PATH        Override the path context for starship prompt
 #   --no-progress      Disable terminal context progress bar
+#   --mode MODE        Force mode: 'claude' or 'cursor' (auto-detected if not specified)
+#
+# Cursor Usage:
+#   The script automatically detects Cursor via CURSOR_AGENT environment variable.
+#   For Cursor, configure your shell's PROMPT_COMMAND or use in terminal:
+#   export PROMPT_COMMAND='eval "$(~/.local/bin/starship-claude)"'
+#   Or add to your shell config (~/.bashrc, ~/.zshrc, etc.)
 #
 # MIT License
 # Copyright (c) 2026 Martin Emde
@@ -98,10 +107,23 @@ OPUS="󱚦 opus"
 # FYI: Official UI guidelines indicate #D97757 as Claude Orange
 export CLAUDE_STAR=""
 
+# Detect environment: Claude Code or Cursor
+# Cursor sets CURSOR_AGENT=1, Claude Code does not
+detect_environment() {
+  if [[ -n "${CURSOR_AGENT:-}" ]] && [[ "${CURSOR_AGENT:-}" == "1" ]]; then
+    echo "cursor"
+  elif [[ -n "${FORCE_MODE:-}" ]]; then
+    echo "$FORCE_MODE"
+  else
+    echo "claude"
+  fi
+}
+
 # Parse command line options
 show_progress=1
 starship_config=""
 starship_path=""
+force_mode=""
 while [ $# -gt 0 ]; do
   case "$1" in
   --no-progress)
@@ -124,6 +146,19 @@ while [ $# -gt 0 ]; do
     starship_path="$2"
     shift 2
     ;;
+  --mode)
+    if [ $# -lt 2 ]; then
+      echo "Error: --mode requires 'claude' or 'cursor' argument" >&2
+      exit 1
+    fi
+    if [[ "$2" != "claude" ]] && [[ "$2" != "cursor" ]]; then
+      echo "Error: --mode must be 'claude' or 'cursor'" >&2
+      exit 1
+    fi
+    force_mode="$2"
+    export FORCE_MODE="$force_mode"
+    shift 2
+    ;;
   *)
     echo "Unknown option: $1" >&2
     exit 1
@@ -131,9 +166,23 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Detect environment
+ENVIRONMENT="$(detect_environment)"
+
 payload="$(cat || true)"
 
-if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
+# For Cursor, if no payload provided, try to get data from environment or work in standalone mode
+if [[ "$ENVIRONMENT" == "cursor" ]] && [[ -z "$payload" ]]; then
+  # Cursor mode: can work without JSON input, just use starship with current directory
+  # Set minimal environment variables for compatibility
+  export CLAUDE_MODEL=""
+  export CLAUDE_CONTEXT=""
+  export CLAUDE_COST=""
+  export CLAUDE_SUMMARY=""
+  export CLAUDE_STAR=""
+else
+  # Claude Code mode or Cursor with JSON input: parse the JSON payload
+  if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   #
   # Extract all values from JSON in a SINGLE jq call for performance
   # Output format: newline-separated values in a known order
@@ -346,6 +395,7 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   else
     export CLAUDE_CONTEXT="  %"
   fi
+  fi
 fi
 
 # Allow overriding starship command for testing
@@ -362,9 +412,17 @@ if [[ -n "${STARSHIP_CMD:-}" ]]; then
 fi
 
 # Determine Starship config path
-# Priority: --config flag > default location
+# Priority: --config flag > environment-specific default location
 if [ -z "$starship_config" ]; then
-  starship_config="$HOME/.claude/starship.toml"
+  if [[ "$ENVIRONMENT" == "cursor" ]]; then
+    starship_config="$HOME/.cursor/starship.toml"
+    # Fallback to Claude Code location if Cursor config doesn't exist
+    if [[ ! -f "$starship_config" ]] && [[ -f "$HOME/.claude/starship.toml" ]]; then
+      starship_config="$HOME/.claude/starship.toml"
+    fi
+  else
+    starship_config="$HOME/.claude/starship.toml"
+  fi
 fi
 
 # Build starship prompt arguments using array for safe argument passing
