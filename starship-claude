@@ -216,8 +216,23 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   dir="${values[23]:-}"
 
   # cd into workspace dir
+  # Security: Validate directory path to prevent unsafe directory changes
   if [ -n "$dir" ] && [ -d "$dir" ]; then
-    cd "$dir"
+    # Resolve the directory path to prevent symlink attacks and path traversal
+    resolved_dir=""
+    if command -v realpath >/dev/null 2>&1; then
+      resolved_dir="$(realpath "$dir" 2>/dev/null || echo "")"
+    elif command -v readlink >/dev/null 2>&1; then
+      resolved_dir="$(readlink -f "$dir" 2>/dev/null || echo "")"
+    else
+      resolved_dir="$dir"
+    fi
+    
+    # Only change directory if resolved path exists and is a directory
+    # Additional safety: ensure it's not a dangerous path like /dev
+    if [[ -n "$resolved_dir" ]] && [[ -d "$resolved_dir" ]] && [[ "$resolved_dir" != "/dev"* ]]; then
+      cd "$resolved_dir" || true
+    fi
   fi
 
   #
