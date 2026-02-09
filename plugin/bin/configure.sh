@@ -7,10 +7,11 @@
 # Options:
 #   --nerdfont              Use nerd font symbols (default: text only)
 #   --palette PALETTE       Set color palette (catppuccin_mocha, catppuccin_frappe,
-#                           dracula, gruvbox_dark, nord, tokyonight)
+#                           dracula, gruvbox_dark, nord, rose_pine, rose_pine_moon,
+#                           rose_pine_dawn, tokyonight)
 #   --style STYLE           Choose style: minimal or bubbles (default: minimal)
 #   --compare-styles        Show both minimal and bubbles styles
-#   --all-palettes          Show all 6 color palettes in current style
+#   --all-palettes          Show all color palettes in current style
 #   --config CONFIG         Forward config path to starship-claude
 #   --path PATH             Forward path to starship-claude
 #   --write [FILE]          Write generated config to FILE (default: ~/.claude/starship.toml)
@@ -34,7 +35,7 @@ readonly TEMPLATE_DIR="${PLUGIN_ROOT}/templates"
 readonly STARSHIP_CLAUDE="${PLUGIN_ROOT}/bin/starship-claude"
 
 # Available themes
-readonly VALID_THEMES="catppuccin_mocha catppuccin_frappe dracula gruvbox_dark nord tokyonight"
+readonly VALID_THEMES="catppuccin_mocha catppuccin_frappe dracula gruvbox_dark nord rose_pine rose_pine_moon rose_pine_dawn tokyonight"
 
 # Sample JSON for preview
 readonly SAMPLE_JSON='{"model":{"display_name":"Opus 4.5"},"cost":{"total_cost_usd":0.05},"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":10000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
@@ -63,6 +64,9 @@ Options:
                             dracula
                             gruvbox_dark
                             nord
+                            rose_pine
+                            rose_pine_moon
+                            rose_pine_dawn
                             tokyonight
   --style STYLE           Choose style: minimal (default) or bubbles
                           Note: bubbles style requires nerd fonts
@@ -292,7 +296,7 @@ run_compare_styles() {
 }
 
 run_all_palettes() {
-  local palettes=(catppuccin_mocha catppuccin_frappe tokyonight nord dracula gruvbox_dark)
+  local palettes=(catppuccin_mocha catppuccin_frappe tokyonight nord rose_pine rose_pine_moon rose_pine_dawn dracula gruvbox_dark)
   local p
 
   for p in "${palettes[@]}"; do

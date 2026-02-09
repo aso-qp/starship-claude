@@ -1,0 +1,22 @@
+# Rose Pine Dawn
+[palettes.custom]
+
+# Semantic colors for templates
+claude = "#D97757"
+claude_bg = "#f2e9e1"
+
+directory = "#56949f"
+directory_bg = "#faf4ed"
+
+git_branch = "#d7827e"
+git_status = "#b4637a"
+git_bg = "#f2e9e1"
+
+model = "#907aa9"
+model_bg = "#faf4ed"
+
+context = "#ea9d34"
+context_bg = "#f2e9e1"
+
+cost = "#56949f"
+cost_bg = "#fffaf3"

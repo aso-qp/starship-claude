@@ -1,0 +1,22 @@
+# Rose Pine Moon
+[palettes.custom]
+
+# Semantic colors for templates
+claude = "#D97757"
+claude_bg = "#393552"
+
+directory = "#9ccfd8"
+directory_bg = "#232136"
+
+git_branch = "#ebbcba"
+git_status = "#eb6f92"
+git_bg = "#393552"
+
+model = "#c4a7e7"
+model_bg = "#232136"
+
+context = "#f6c177"
+context_bg = "#393552"
+
+cost = "#9ccfd8"
+cost_bg = "#2a273f"
