@@ -1,0 +1,23 @@
+# Rose Pine Moon (ANSI)
+# Uses ANSI color names - adapts to terminal's Rose Pine Moon theme
+[palettes.custom]
+
+# Semantic colors for templates
+claude = "bright-red"
+claude_bg = "black"
+
+directory = "cyan"
+directory_bg = "bright-black"
+
+git_branch = "magenta"
+git_status = "red"
+git_bg = "black"
+
+model = "blue"
+model_bg = "bright-black"
+
+context = "yellow"
+context_bg = "black"
+
+cost = "green"
+cost_bg = "bright-black"

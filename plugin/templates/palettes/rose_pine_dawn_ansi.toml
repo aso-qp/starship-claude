@@ -1,0 +1,23 @@
+# Rose Pine Dawn (ANSI)
+# Uses ANSI color names - adapts to terminal's Rose Pine Dawn theme
+[palettes.custom]
+
+# Semantic colors for templates
+claude = "bright-red"
+claude_bg = "white"
+
+directory = "cyan"
+directory_bg = "bright-white"
+
+git_branch = "magenta"
+git_status = "red"
+git_bg = "white"
+
+model = "blue"
+model_bg = "bright-white"
+
+context = "yellow"
+context_bg = "white"
+
+cost = "green"
+cost_bg = "bright-white"
