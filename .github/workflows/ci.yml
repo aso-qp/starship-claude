@@ -20,7 +20,18 @@ jobs:
 
       - name: Install starship
         run: |
-          curl -sS https://starship.rs/install.sh | sh -s -- --yes
+          # Security: Download script first, verify it's not empty, then execute
+          # This prevents execution of empty or corrupted downloads
+          install_script=$(mktemp)
+          curl -fsSL https://starship.rs/install.sh -o "$install_script"
+          # Verify script is not empty and appears to be a shell script
+          if [ ! -s "$install_script" ] || [ "$(head -c 2 "$install_script")" != "#!" ]; then
+            echo "Error: Downloaded starship install script is invalid" >&2
+            rm -f "$install_script"
+            exit 1
+          fi
+          sh "$install_script" --yes
+          rm -f "$install_script"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Run tests
