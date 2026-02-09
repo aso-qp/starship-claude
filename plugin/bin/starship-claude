@@ -309,16 +309,16 @@ if [ -z "$starship_config" ]; then
   starship_config="$HOME/.claude/starship.toml"
 fi
 
-# Build starship prompt arguments
-starship_args="prompt"
+# Build starship prompt arguments using array for safe argument passing
+starship_args=("prompt")
 if [ -n "$starship_path" ]; then
-  starship_args="$starship_args --path $starship_path"
+  starship_args+=("--path" "$starship_path")
 fi
 
 # Force non-zsh-style output so we don't get %{%} markers
 STARSHIP_CONFIG="$starship_config" \
   STARSHIP_SHELL=sh \
-  $starship_cmd $starship_args
+  "$starship_cmd" "${starship_args[@]}"
 
 # Terminal progress bar (OSC 9;4) - sent AFTER starship to avoid render conflicts
 # Can be disabled via --no-progress flag
