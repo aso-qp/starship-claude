@@ -263,14 +263,32 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   export CLAUDE_SUMMARY=""
   transcript_path="${values[0]:-}"
   if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
-    summary="$(jq -rs '[.[] | select(.type == "summary")] | last | .summary // empty' "$transcript_path")"
-    if [ -n "$summary" ]; then
-      # Sanitize: replace newlines with spaces, collapse whitespace, trim
-      summary="${summary//$'\n'/ }" # newlines to spaces
-      summary="${summary//  / }"    # collapse double spaces (basic)
-      summary="${summary# }"        # trim leading
-      summary="${summary% }"        # trim trailing
-      export CLAUDE_SUMMARY="$summary"
+    # Security: Validate transcript_path is within expected Claude directory to prevent path traversal
+    # Resolve the path and ensure it's within ~/.claude/ or a subdirectory
+    expected_prefix="${HOME}/.claude"
+    resolved_path=""
+    if command -v realpath >/dev/null 2>&1; then
+      resolved_path="$(realpath "$transcript_path" 2>/dev/null || echo "")"
+    else
+      # Fallback: use readlink if available, otherwise use the path as-is
+      if command -v readlink >/dev/null 2>&1; then
+        resolved_path="$(readlink -f "$transcript_path" 2>/dev/null || echo "")"
+      else
+        resolved_path="$transcript_path"
+      fi
+    fi
+    
+    # Check if resolved path starts with expected prefix
+    if [[ -n "$resolved_path" ]] && [[ "$resolved_path" == "$expected_prefix"* ]]; then
+      summary="$(jq -rs '[.[] | select(.type == "summary")] | last | .summary // empty' "$transcript_path")"
+      if [ -n "$summary" ]; then
+        # Sanitize: replace newlines with spaces, collapse whitespace, trim
+        summary="${summary//$'\n'/ }" # newlines to spaces
+        summary="${summary//  / }"    # collapse double spaces (basic)
+        summary="${summary# }"        # trim leading
+        summary="${summary% }"        # trim trailing
+        export CLAUDE_SUMMARY="$summary"
+      fi
     fi
   fi
 
