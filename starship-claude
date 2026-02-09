@@ -316,15 +316,31 @@ if command -v jq >/dev/null 2>&1 && [ -n "$payload" ]; then
   cache_read="${values[21]:-}"
 
   if [ -n "$context_size" ] && [ "$context_size" != "null" ] && [ -n "$input_tokens" ]; then
-    # Use 0 defaults for arithmetic when values exist but individual fields might be missing
-    current_tokens=$((${input_tokens:-0} + ${cache_creation:-0} + ${cache_read:-0}))
-    export CLAUDE_CURRENT_TOKENS="$current_tokens"
+    # Security: Validate numeric values before arithmetic operations
+    # This prevents unexpected behavior from non-numeric input
+    is_numeric() {
+      [[ "$1" =~ ^[0-9]+$ ]]
+    }
+    
+    # Validate all values are numeric before arithmetic
+    if is_numeric "${input_tokens:-0}" && \
+       is_numeric "${cache_creation:-0}" && \
+       is_numeric "${cache_read:-0}" && \
+       is_numeric "$context_size" && \
+       [ "$context_size" -gt 0 ]; then
+      # Use 0 defaults for arithmetic when values exist but individual fields might be missing
+      current_tokens=$((${input_tokens:-0} + ${cache_creation:-0} + ${cache_read:-0}))
+      export CLAUDE_CURRENT_TOKENS="$current_tokens"
 
-    if [ "$current_tokens" -gt 0 ]; then
-      percent_used=$((current_tokens * 100 / context_size))
-      export CLAUDE_PERCENT_RAW="$percent_used"
-      export CLAUDE_CONTEXT="$(printf '%3s' "${percent_used}%")"
+      if [ "$current_tokens" -gt 0 ]; then
+        percent_used=$((current_tokens * 100 / context_size))
+        export CLAUDE_PERCENT_RAW="$percent_used"
+        export CLAUDE_CONTEXT="$(printf '%3s' "${percent_used}%")"
+      else
+        export CLAUDE_CONTEXT="  %"
+      fi
     else
+      # Invalid numeric input - set safe defaults
       export CLAUDE_CONTEXT="  %"
     fi
   else
