@@ -301,7 +301,16 @@ fi
 
 # Allow overriding starship command for testing
 # Set STARSHIP_CMD to use a custom command (e.g., 'env' for testing)
+# Security: Validate STARSHIP_CMD contains only safe characters to prevent command injection
 starship_cmd="${STARSHIP_CMD:-starship}"
+if [[ -n "${STARSHIP_CMD:-}" ]]; then
+  # Only allow alphanumeric, forward slash, dash, underscore, and spaces (for simple commands)
+  # Reject any command containing shell metacharacters
+  if [[ ! "$starship_cmd" =~ ^[a-zA-Z0-9/_.-]+(\ [a-zA-Z0-9/_.-]+)*$ ]]; then
+    echo "Error: STARSHIP_CMD contains invalid characters. Only alphanumeric, /, -, _, and . are allowed." >&2
+    exit 1
+  fi
+fi
 
 # Determine Starship config path
 # Priority: --config flag > default location
